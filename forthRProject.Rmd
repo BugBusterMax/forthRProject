@@ -1,0 +1,234 @@
+---
+title: "forthRProject"
+author: "Zirui"
+date: "2024-10-16"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(Stat2Data)
+data("Hawks")
+```
+## 1
+```{r}
+head(Hawks)
+```
+## 1.1
+## (Q1)
+```{r}
+HawksTail <- Hawks$Tail
+mean_HawksTail <- mean(HawksTail, na.rm = TRUE)
+median_HawksTail <- median(HawksTail, na.rm = TRUE)
+mean_HawksTail
+median_HawksTail
+```
+## 1.2
+## (Q1)
+```{r}
+result <- Hawks %>% summarise(
+    Wing_mean = mean(Wing, na.rm = TRUE),
+    Wing_t_mean = mean(Wing, trim = 0.5, na.rm = TRUE),
+    Wing_med = median(Wing, na.rm = TRUE),
+    Weight_mean = mean(Weight, na.rm = TRUE),
+    Weight_t_mean = mean(Weight, trim = 0.5, na.rm = TRUE),
+    Weight_med = median(Weight, na.rm = TRUE)
+  )
+print(result)
+```
+## (Q2)
+```{r}
+result_by_species <- Hawks %>% group_by(Species) %>% summarise(
+    Wing_mean = mean(Wing, na.rm = TRUE),
+    Wing_t_mean = mean(Wing, trim = 0.5, na.rm = TRUE),
+    Wing_med = median(Wing, na.rm = TRUE),
+    Weight_mean = mean(Weight, na.rm = TRUE),
+    Weight_t_mean = mean(Weight, trim = 0.5, na.rm = TRUE),
+    Weight_med = median(Weight, na.rm = TRUE)
+  )
+print(result_by_species)
+```
+## 1.3
+## (Q1)
+```{r}
+HawksTail <- Hawks$Tail
+original_mean <- mean(HawksTail, na.rm = TRUE)
+a <- 2
+b <- 3
+transformed_mean <- mean(a * HawksTail + b, na.rm = TRUE)
+original_mean
+transformed_mean
+```
+## (Q2)
+```{r}
+HawksTail <- Hawks$Tail
+original_variance <- var(HawksTail, na.rm = TRUE)
+original_sd <- sd(HawksTail, na.rm = TRUE)
+a <- 2
+b <- 3
+transformed_variance <- var(a * HawksTail + b, na.rm = TRUE)
+transformed_sd <- sd(a * HawksTail + b, na.rm = TRUE)
+original_variance
+original_sd
+transformed_variance
+transformed_sd
+```
+## 1.4
+## (Q1)
+```{r}
+hal <- Hawks$Hallux
+hal <- hal[!is.na(hal)]
+outlier_val <- 100
+num_outliers <- 10
+corrupted_hal <- c(hal, rep(outlier_val, times = num_outliers))
+original_mean <- mean(hal)
+corrupted_mean <- mean(corrupted_hal)
+original_mean
+corrupted_mean
+num_outliers_vect <- seq(0, 1000)
+means_vect <- c()
+for (num_outliers in num_outliers_vect) {
+  corrupted_hal <- c(hal, rep(outlier_val, times = num_outliers))
+  means_vect <- c(means_vect, mean(corrupted_hal))
+}
+library(ggplot2)
+results_df <- data.frame(
+  num_outliers = num_outliers_vect,
+  means = means_vect
+)
+ggplot(results_df, aes(x = num_outliers, y = means)) +
+  geom_line(color = "blue") +
+  labs(title = "Effect of Outliers on Sample Mean",
+       x = "Number of Outliers",
+       y = "Sample Mean") +
+  theme_minimal()
+```
+## (Q1)
+```{r}
+medians_vect <- c()
+for (num_outliers in num_outliers_vect) {
+  corrupted_hal <- c(hal, rep(outlier_val, times = num_outliers))
+  medians_vect <- c(medians_vect, median(corrupted_hal))
+}
+means_vect <- c()
+medians_vect <- c()
+for (num_outliers in num_outliers_vect) {
+  corrupted_hal <- c(hal, rep(outlier_val, times = num_outliers))
+  means_vect <- c(means_vect, mean(corrupted_hal))
+  medians_vect <- c(medians_vect, median(corrupted_hal))
+}
+
+results_df <- data.frame(
+  num_outliers = num_outliers_vect,
+  means = means_vect,
+  medians = medians_vect
+)
+head(results_df)
+```
+## (Q2)
+```{r}
+means_vect <- c()
+medians_vect <- c()
+t_means_vect <- c()
+for (num_outliers in num_outliers_vect) {
+  corrupted_hal <- c(hal, rep(outlier_val, times = num_outliers))
+  means_vect <- c(means_vect, mean(corrupted_hal))
+  medians_vect <- c(medians_vect, median(corrupted_hal))
+  t_means_vect <- c(t_means_vect, mean(corrupted_hal, trim = 0.1))
+}
+results_df <- data.frame(
+  num_outliers = num_outliers_vect,
+  means = means_vect,
+  medians = medians_vect,
+  trimmed_means = t_means_vect
+)
+head(results_df)
+ggplot(results_df, aes(x = num_outliers)) +
+  geom_line(aes(y = means, color = "Mean")) +
+  geom_line(aes(y = medians, color = "Median")) +
+  geom_line(aes(y = trimmed_means, color = "Trimmed Mean")) +
+  labs(title = "Effect of Outliers on Mean, Median, and Trimmed Mean",
+       x = "Number of Outliers",
+       y = "Value") +
+  scale_color_manual(values = c("Mean" = "blue", "Median" = "red", "Trimmed Mean" = "green")) +
+  theme_minimal()
+```
+## (Q3)
+```{r}
+df_means_medians <- data.frame(
+  num_outliers = num_outliers_vect, 
+  mean = means_vect, 
+  t_mean = t_means_vect, 
+  median = medians_vect
+)
+df_long <- df_means_medians %>% pivot_longer(!num_outliers, names_to = "Estimator", values_to = "Value")
+ggplot(df_long, aes(x = num_outliers, color = Estimator, linetype = Estimator, y = Value)) +
+  geom_line() +
+  xlab("异常值数量") +
+  ylab("值") +
+  labs(title = "异常值对均值、中位数和修剪均值的影响") +
+  theme_minimal()
+```
+## 1.5
+## (Q1)
+```{r}
+ggplot(Hawks, aes(x = Species, y = Weight)) + geom_boxplot(outlier.shape = 16, outlier.color = "red", outlier.size = 2) + xlab("Species") + ylab("Weight") + ggtitle("Distribution of Hawk Weights by Species") + theme_minimal()
+```
+## (Q2)
+```{r}
+quantiles <- Hawks %>% group_by(Species) %>% summarise(
+    quantile025 = quantile(Weight, 0.25, na.rm = TRUE),
+    quantile050 = quantile(Weight, 0.50, na.rm = TRUE),
+    quantile075 = quantile(Weight, 0.75, na.rm = TRUE)
+  )
+quantiles
+```
+## (Q3)
+```{r}
+num_outliers <- function(x) {
+  x <- x[!is.na(x)]
+  q25 <- quantile(x, 0.25)
+  q75 <- quantile(x, 0.75)
+  IQR_val <- q75 - q25
+  lower_bound <- q25 - 1.5 * IQR_val
+  upper_bound <- q75 + 1.5 * IQR_val
+  num_outliers <- sum(x < lower_bound | x > upper_bound)
+  return(num_outliers)
+}
+test_vector <- c(0, 40, 60, 185)
+num_outliers(test_vector)
+num_outliers(c(0, 40, 60, 185))
+```
+## (Q4)
+```{r}
+outliers_by_species <- Hawks %>% group_by(Species) %>% summarise(num_outliers_weight = num_outliers(Weight))
+outliers_by_species
+```
+## 1.6
+## (Q1)
+```{r}
+cov_weight_wing <- cov(Hawks$Weight, Hawks$Wing, use = "complete.obs")
+cor_weight_wing <- cor(Hawks$Weight, Hawks$Wing, use = "complete.obs")
+cov_weight_wing
+cor_weight_wing
+```
+## (Q2)
+```{r}
+X_tilde <- 2.4 * Hawks$Weight + 7.1
+Y_tilde <- -1 * Hawks$Wing + 3
+valid_indices <- complete.cases(X_tilde, Y_tilde)
+X_tilde <- X_tilde[valid_indices]
+Y_tilde <- Y_tilde[valid_indices]
+Weight <- Hawks$Weight[valid_indices]
+Wing <- Hawks$Wing[valid_indices]
+cov_original <- cov(Weight, Wing, use = "complete.obs")
+cov_transformed <- cov(X_tilde, Y_tilde)
+cor_original <- cor(Weight, Wing, use = "complete.obs")
+cor_transformed <- cor(X_tilde, Y_tilde)
+list(
+  Covariance_Original = cov_original,
+  Covariance_Transformed = cov_transformed,
+  Correlation_Original = cor_original,
+  Correlation_Transformed = cor_transformed
+)
+```
