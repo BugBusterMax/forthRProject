@@ -232,3 +232,70 @@ list(
   Correlation_Transformed = cor_transformed
 )
 ```
+## (Q4)
+```{r}
+Gen_X_numbers <- function(n) {
+  X_vals <- numeric(n)
+  for (i in 1:n) {
+    u <- runif(1)
+    if (u < 0.5) {
+      X_vals[i] <- 0
+    } else if (u < 0.7) {
+      X_vals[i] <- 3
+    } else {
+      X_vals[i] <- 10
+    }
+  }
+  return(X_vals)
+}
+Gen_X_numbers(4)
+Gen_Y_samples <- function(m, n) {
+  Y_vals <- map_dbl(1:m, ~ sum(Gen_X_numbers(n)))
+  df_Y <- data.frame(index = 1:m, Y = Y_vals)
+  return(df_Y)
+}
+Gen_Y_samples(5, 2)
+n <- 3
+m <- 50000
+Y_samples <- Gen_Y_samples(m, n)
+ggplot(Y_samples, aes(x = Y)) +
+  geom_bar(stat = "count", width = 0.7, fill = "skyblue") + xlab("Y values (sum of X1, X2, X3)") + ylab("Frequency") + ggtitle("Bar Plot of 50000 Samples of Y = X1 + X2 + X3") + theme_minimal()
+n <- 20
+Y_samples_n20 <- Gen_Y_samples(m, n)
+ggplot(Y_samples_n20, aes(x = Y)) + geom_bar(stat = "count", width = 0.7, fill = "lightcoral") + xlab("Y values (sum of X1 to X20)") + ylab("Frequency") + ggtitle("Bar Plot of 50000 Samples of Y = X1 + ... + X20") + theme_minimal()
+min_value <- min(Y_samples_n20$Y)
+max_value <- max(Y_samples_n20$Y)
+sample_range <- max_value - min_value
+min_value
+max_value
+sample_range
+n <- 1000
+Y_samples_n1000 <- Gen_Y_samples(m, n)
+ggplot(Y_samples_n1000, aes(x = Y)) +
+  geom_bar(stat = "count", width = 0.7, fill = "lightblue") + xlab("Y values (sum of X1 to X1000)") + ylab("Frequency") + ggtitle("Bar Plot of 50000 Samples of Y = X1 + ... + X1000") + theme_minimal()
+min_value_n1000 <- min(Y_samples_n1000$Y)
+max_value_n1000 <- max(Y_samples_n1000$Y)
+sample_range_n1000 <- max_value_n1000 - min_value_n1000
+min_value_n1000
+max_value_n1000
+sample_range_n1000
+```
+## 3
+## 3.1
+```{r}
+alpha <- 0.3
+beta <- 0.4
+simulate_X <- function(n, alpha, beta) {
+  U <- runif(n)
+  X <- numeric(n)
+  X[U < (1 - alpha - beta)] <- 0
+  X[U >= (1 - alpha - beta) & U < (1 - beta)] <- 3
+  X[U >= (1 - beta)] <- 10
+  
+  return(X)
+}
+set.seed(123)
+n <- 1000
+X_sample <- simulate_X(n, alpha, beta)
+table(X_sample) / n
+```
