@@ -299,3 +299,134 @@ n <- 1000
 X_sample <- simulate_X(n, alpha, beta)
 table(X_sample) / n
 ```
+## (Q1)
+## (Q2)
+```{r}
+set.seed(0)
+n <- 1000
+sample_X <- data.frame(U=runif(n)) %>% mutate(X=case_when(
+  (0<=U)&(U<0.25)~3,
+  (0.25<=U)&(U<0.5)~10,
+  (0.5<=U)&(U<=1)~0)) %>% pull(X)
+```
+## (Q3)
+```{r}
+sample_X_0310 <- function(alpha, beta, n) {
+  U <- runif(n)
+  X <- case_when(
+    (U >= 0) & (U < alpha) ~ 3,
+    (U >= alpha) & (U < alpha + beta) ~ 10,
+    (U >= alpha + beta) & (U <= 1) ~ 0
+  )
+  return(X)
+}
+set.seed(0)
+sample_X <- sample_X_0310(alpha = 0.25, beta = 0.25, n = 1000)
+head(sample_X)
+```
+## (Q4)
+```{r}
+alpha <- 1/2
+beta <- 1/10
+n <- 10000
+set.seed(0)
+sample_X <- sample_X_0310(alpha, beta, n)
+sample_average <- mean(sample_X)
+sample_average
+```
+## (Q5)
+```{r}
+sample_variance <- var(sample_X)
+sample_variance
+```
+## (Q6)
+```{r}
+n <- 100
+alpha <- 1/10
+beta_values <- seq(0, 9/10, by = 0.01)
+calculate_expectation <- function(alpha, beta) {
+  return(3 * alpha + 10 * beta)
+}
+results_df <- tibble(beta = beta_values) %>% mutate(
+    sample_X = map(beta, ~ sample_X_0310(alpha = alpha, beta = .x, n = n)),
+    samplemean = map_dbl(sample_X, ~ mean(.x)),
+    Expectation = map_dbl(beta, ~ calculate_expectation(alpha, .x))
+  )
+print(results_df)
+```
+```{r}
+ggplot(results_df, aes(x = beta)) +
+  geom_line(aes(y = samplemean, color = "Sample Mean"), size = 1) +  # Plot sample mean
+  geom_line(aes(y = Expectation, color = "Theoretical Expectation"), size = 1, linetype = "dashed") + labs(title = "Sample Averages and Theoretical Expectation as a Function of Beta",
+       x = "Beta",
+       y = "Value of X",
+       color = "Legend") + theme_minimal()
+```
+## 3.2
+## (Q1)
+## (Q2)
+```{r}
+my_cdf_exp <- function(x, lambda) {
+  if (x < 0) {
+    return(0)
+  } else {
+    return(1 - exp(-lambda * x))
+  }
+}
+lambda <- 1/2
+library(purrr)
+map_dbl(.x = seq(-1, 4), .f = ~my_cdf_exp(x = .x, lambda = lambda))
+test_inputs <- seq(-1, 10, 0.1)
+my_cdf_output <- map_dbl(.x = test_inputs, .f = ~my_cdf_exp(x = .x, lambda = lambda))
+inbuilt_cdf_output <- map_dbl(.x = test_inputs, .f = ~pexp(q = .x, rate = lambda))
+all.equal(my_cdf_output, inbuilt_cdf_output)
+```
+## (Q3)
+```{r}
+my_quantile_exp <- function(p, lambda) {
+  if (p <= 0 || p >= 1) {
+    stop("p 必须在 (0, 1) 区间内")
+  }
+  return(-log(1 - p) / lambda)
+}
+lambda <- 1/2
+test_probs <- seq(0.01, 0.99, by = 0.01)
+my_quantile_output <- map_dbl(.x = test_probs, .f = ~my_quantile_exp(p = .x, lambda = lambda))
+inbuilt_quantile_output <- map_dbl(.x = test_probs, .f = ~qexp(p = .x, rate = lambda))
+all.equal(my_quantile_output, inbuilt_quantile_output)
+```
+## (Q4)
+## 3.3
+## (Q1)
+## (Q2)
+```{r}
+n <- 50
+p <- 7/10
+binom_df <- data.frame(
+  x = 0:n, 
+  pmf = dbinom(x = 0:n, size = n, prob = p)
+)
+head(binom_df, 3)
+```
+## (Q3)
+```{r}
+n <- 50
+p <- 7/10
+mu <- n * p
+sigma <- sqrt(n * p * (1 - p))
+x_vals <- seq(20, 50, by = 0.1)
+gaussian_df <- data.frame(
+  x = x_vals,
+  pdf = dnorm(x_vals, mean = mu, sd = sigma)
+)
+colors <- c("Gaussian pdf" = "red", "Binomial pmf" = "blue")
+fill <- c("Gaussian pdf" = "white", "Binomial pmf" = "white")
+ggplot() + 
+  labs(x = "x", y = "Probability") + 
+  theme_bw() +
+  geom_line(data = gaussian_df, aes(x = x, y = pdf, color = "Gaussian pdf"), size = 2) +
+  geom_col(data = binom_df, aes(x = x, y = pmf, color = "Binomial pmf", fill = "Binomial pmf")) +
+  scale_color_manual(name = "myLegend", values = colors) +
+  scale_fill_manual(name = "myLegend", values = fill) +
+  xlim(c(20, 50))
+```
